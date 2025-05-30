@@ -3,7 +3,7 @@ ldap-server {{ ansible_hostname }}.{{ ansible_domain }}
 ldap-port 389 ;
 
 # A user with read/write access to the database
-ldap-username "{{ ldap.bind_dn }}" ;
+ldap-username "{{ ldap_admin_dn }}" ;
 ldap-password "{{ ldap.bind_pw }}" ;
 
 # Identify the root object of the config

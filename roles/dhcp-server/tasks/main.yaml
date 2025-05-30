@@ -1,3 +1,7 @@
+---
+#
+#
+#
 - name: Make sure package metadata is up to date
   package:
     update_cache: true
