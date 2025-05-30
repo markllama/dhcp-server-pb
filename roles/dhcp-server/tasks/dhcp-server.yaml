@@ -1,0 +1,19 @@
+- name: Install DHCP Packages
+  package:
+    name:
+      #- isc-dhcp-server
+      - isc-dhcp-server-ldap
+      - dhcping
+      # - kea
+      # - kea-hooks
+    state: present
+  tags: dhcp
+
+- name: Create DHCP Daemon Config File
+  template:
+    src: dhcpd.conf.j2
+    dest: /etc/dhcp/dhcpd.conf
+    owner: root
+    group: root
+    mode: 0644
+  tags: dhcp

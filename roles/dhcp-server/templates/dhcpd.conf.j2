@@ -1,14 +1,14 @@
 # DHCP Host Location
-ldap-server {{ ldap.hostname }}.{{ ldap.domain }}
+ldap-server {{ ansible_hostname }}.{{ ansible_domain }}
 ldap-port 389 ;
 
 # A user with read/write access to the database
-ldap-username "{{ ldap.credentials.bind_dn }}" ;
-ldap-password "{{ ldap.credentials.bind_pw }}" ;
+ldap-username "{{ ldap.bind_dn }}" ;
+ldap-password "{{ ldap.bind_pw }}" ;
 
 # Identify the root object of the config
-ldap-base-dn "dc={{ ldap.domain.split('.') | join(',dc=') }}" ;
-ldap-dhcp-server-cn "{{ ldap.hostname }}" ;
+ldap-base-dn "dc={{ ansible_domain.split('.') | join(',dc=') }}" ;
+ldap-dhcp-server-cn "{{ ansible_hostname }}" ;
 
 # All queries check the database
 ldap-method dynamic ;

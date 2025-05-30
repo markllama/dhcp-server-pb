@@ -1,0 +1,68 @@
+
+
+- name: Create DHCP Server Entry
+  community.general.ldap_entry:
+    bind_dn: "{{ ldap_admin_dn }}"
+    bind_pw: "{{ ldap.bind_pw }}"
+    dn: "{{ ldap_host_dn }}"
+    objectClass:
+      - top
+      - dhcpServer
+    attributes:
+      dhcpServiceDN: "cn=dhcp-service,{{ ldap_zone_dn }}"
+    state: present
+  tags: dhcp_config
+
+- name: Create DHCP Service Entry
+  community.general.ldap_entry:
+    bind_dn: "{{ ldap_admin_dn }}"
+    bind_pw: "{{ ldap.bind_pw }}"
+    dn: "cn=dhcp-service,{{ ldap_zone_dn }}"
+    objectClass:
+      - top
+      - dhcpService
+      - dhcpOptions
+    attributes:
+      dhcpPrimaryDN: "cn=dhcp-host,{{ ldap_zone_dn }}"
+      dhcpStatements:
+        - authoritative
+        - ddns-update-style none
+        - max-lease-time 43200
+        - default-lease-time 3600
+        - allow booting
+        - allow bootp
+      dhcpOption:
+        - domain-name "{{ ansible_domain }}"
+        - domain-name-servers 192.168.3.31,192.168.3.32
+    state: present
+  tags: dhcp_config
+
+- name: Create PXE Boot Subnet
+  community.general.ldap_entry:
+    bind_dn: "{{ ldap_admin_dn }}"
+    bind_pw: "{{ ldap.bind_pw }}"
+    dn: "cn=192.168.3.0,cn=dhcp-service,{{ ldap_zone_dn }}"
+    objectClass:
+      - top
+      - dhcpSubnet
+    attributes:
+      dhcpNetmask: 24
+      dhcpOption: routers 192.168.3.1
+    state: present
+  tags: dhcp_config
+
+- name: Create test host entry
+  community.general.ldap_entry:
+    bind_dn: "{{ ldap_admin_dn }}"
+    bind_pw: "{{ ldap.bind_pw }}"
+    dn: "cn=testhost,cn=dhcp-service,{{ ldap_zone_dn }}"
+    objectClass:
+      - top
+      - dhcpHost
+      - dhcpOptions
+    attributes:
+      dhcpHWAddress: ethernet 0a:00:00:00:00:01
+      dhcpStatements: fixed-address 192.168.3.254
+      dhcpOption: host-name "testhost"
+    state: present
+  tags: dhcp_config

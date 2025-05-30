@@ -3,6 +3,7 @@ ansible.cfg
 inventory.yaml
 vault-secrets
 vars/ldap-credentials.yaml
+vars/dhcp-server.yaml
 
 # Ignore Emacs backup files
 *~

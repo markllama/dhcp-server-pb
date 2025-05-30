@@ -1,0 +1,52 @@
+- name: Install OpenLDAP Packages
+  package:
+    name: "{{ vars.packages[ansible_os_family].ldap }}"
+    state: present
+    update_cache: true
+  tags: ldap
+
+# this is the default, but check
+- name: Enable LDAP Server
+  service:
+    name: slapd
+    state: started
+    enabled: true
+
+#   - name: Set LDAP Server Password
+#       shell:
+#         cmd: |
+#           echo 
+#     tags: ldap
+
+
+# DHCP elements for LDAP service
+# - LDAP Schema format file for DHCP server configuration elements
+# https://github.com/isc-projects/dhcp/blob/master/contrib/ldap/dhcp.schema
+# - Instructions for converting schema file to LDIF format
+# https://electron-swamp.blogspot.com/2014/05/robust-and-flexable-dhcp-and.html#convert
+# These are static files
+- name: Copy DHCP LDIF spec to the schema directory
+  copy:
+    src: "{{ item }}"
+    dest: "/etc/ldap/schema/{{ item }}"
+    owner: root
+    group: root
+    mode: 0644
+  loop:
+    - dhcp.schema
+    - dhcp.ldif
+  tags: ldap
+
+- name: Check if DHCP schema is already loaded
+  shell:
+    cmd: |
+      ldapsearch -Q -Y EXTERNAL -H ldapi:/// -LLL -b 'cn=schema,cn=config' 'cn={*}dhcp' dn
+  register: dhcp_schema_check
+  tags: ldap
+
+- name: Load DHCP Schema
+  shell:
+    cmd: ldapadd -Q -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/dhcp.ldif
+  when: dhcp_schema_check.stdout_lines | length == 0
+  register: dhcp_schema_load
+  tags: ldap

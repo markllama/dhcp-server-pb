@@ -1,150 +1,24 @@
 - name: Make sure package metadata is up to date
   package:
     update_cache: true
-    
+
 - name: Install LDAP Server
-  block:
-    - name: Install OpenLDAP Packages
-      package:
-        name: "{{ vars.packages[ansible_os_family].ldap }}"
-        state: present
-        update_cache: true
-      tags: ldap
+  import_tasks: ldap-server.yaml
+  tags: ldap
 
-    # this is the default, but check
-    - name: Enable LDAP Server
-      service:
-        name: slapd
-        state: started
-        enabled: true
-
-#   - name: Set LDAP Server Password
-#       shell:
-#         cmd: |
-#           echo 
-#     tags: ldap
-
-
-# DHCP elements for LDAP service
-# - LDAP Schema format file for DHCP server configuration elements
-# https://github.com/isc-projects/dhcp/blob/master/contrib/ldap/dhcp.schema
-# - Instructions for converting schema file to LDIF format
-# https://electron-swamp.blogspot.com/2014/05/robust-and-flexable-dhcp-and.html#convert
-# These are static files
-    - name: Copy DHCP LDIF spec to the schema directory
-      copy:
-        src: "{{ item }}"
-        dest: "/etc/ldap/schema/{{ item }}"
-        owner: root
-        group: root
-        mode: 0644
-      loop:
-        - dhcp.schema
-        - dhcp.ldif
-      tags: ldap
-
-    - name: Check if DHCP schema is already loaded
-      shell:
-        cmd: |
-          ldapsearch -Q -Y EXTERNAL -H ldapi:/// -LLL -b 'cn=schema,cn=config' 'cn={*}dhcp' dn
-      register: dhcp_schema_check
-      tags: ldap
-
-    - name: Report DHCP schema check
-      debug:
-        msg: "{{ dhcp_schema_check }}"
-      tags: ldap
-
-    - name: Load DHCP Schema
-      shell:
-        cmd: ldapadd -Q -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/dhcp.ldif
-      when: dhcp_schema_check.stdout_lines | length == 0
-      register: dhcp_schema_load
-      tags: ldap
-      
+- name: define LDAP variables
+  set_fact:
+    ldap_zone_dn: "dc={{ ansible_domain.split('.') | join(',dc=') }}"
+    ldap_host_dn: "cn={{ ansible_hostname }},dc={{ ansible_domain.split('.') | join(',dc=') }}"
+    ldap_admin_dn: "cn={{ ldap.bind_cn }},dc={{ ansible_domain.split('.') | join(',dc=') }}"
+  tags:
+    - dhcp
+    - dhcp_config
+  
+- name: Configure DHCP Server (LDAP)
+  import_tasks: dhcp-config.yaml
+  tags: dhcp_config
+  
 - name: Install DHCP Server
-  block:
-    - name: Install DHCP Packages
-      package:
-        name:
-          #- isc-dhcp-server
-          - isc-dhcp-server-ldap
-          - dhcping
-          # - kea
-          # - kea-hooks
-        state: present
-      tags: dhcp
-
-    - name: Create DHCP Daemon Config File
-      template:
-        src: dhcpd.conf.j2
-        dest: /etc/dhcp/dhcpd.conf
-        owner: root
-        group: root
-        mode: 0644
-      tags: dhcp
-
-- name: Load DHCP Configuration
-  block:
-    - name: Create DHCP Server Entry
-      community.general.ldap_entry:
-        dn: cn=dhcp-host,dc=lab,dc=lamourine,dc=org
-        objectClass:
-          - top
-          - dhcpServer
-        attributes:
-          dhcpServiceDN: cn=dhcp-service,dc=lab,dc=lamourine,dc=org
-        state: present
-      args: "{{ ldap.credentials }}"
-      tags: dhcp_config
-
-    - name: Create DHCP Service Entry
-      community.general.ldap_entry:
-        dn: cn=dhcp-service,dc=lab,dc=lamourine,dc=org
-        objectClass:
-          - top
-          - dhcpService
-          - dhcpOptions
-        attributes:
-          dhcpPrimaryDN: cn=dhcp-host,dc=lab,dc=lamourine,dc=org
-          dhcpStatements:
-            - authoritative
-            - ddns-update-style none
-            - max-lease-time 43200
-            - default-lease-time 3600
-            - allow booting
-            - allow bootp
-          dhcpOption:
-            - domain-name "lab.lamourine.org"
-            - domain-name-servers 192.168.3.31,192.168.3.32
-        state: present
-      args: "{{ ldap.credentials }}"
-      tags: dhcp_config
-
-    - name: Create PXE Boot Subnet
-      community.general.ldap_entry:
-        dn: cn=192.168.3.0,cn=dhcp-service,dc=lab,dc=lamourine,dc=org
-        objectClass:
-          - top
-          - dhcpSubnet
-        attributes:
-          dhcpNetmask: 24
-          dhcpOption: routers 192.168.3.1
-        state: present
-      args: "{{ ldap.credentials }}"
-      tags: dhcp_config
-
-    - name: Create test host entry
-      community.general.ldap_entry:
-        dn: cn=testhost,cn=dhcp-service,dc=lab,dc=lamourine,dc=org
-        objectClass:
-          - top
-          - dhcpHost
-          - dhcpOptions
-        attributes:
-          dhcpHWAddress: ethernet 0a:00:00:00:00:01
-          dhcpStatements: fixed-address 192.168.3.254
-          dhcpOption: host-name "testhost"
-        state: present
-      args: "{{ ldap.credentials }}"
-      tags: dhcp_config
+  import_tasks: dhcp-server.yaml
+  tags: dhcp
