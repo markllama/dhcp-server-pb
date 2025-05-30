@@ -1,0 +1,12 @@
+---
+- name: DHCP Server
+  hosts:
+    - dhcp_servers
+
+  become: true
+
+  roles:
+    - dhcp-server
+
+  vars_files:
+    - dhcp-server.yaml

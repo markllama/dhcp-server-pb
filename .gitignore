@@ -1,0 +1,8 @@
+# Ignore user customization files
+ansible.cfg
+inventory.yaml
+vault-secrets
+vars/ldap-credentials.yaml
+
+# Ignore Emacs backup files
+*~

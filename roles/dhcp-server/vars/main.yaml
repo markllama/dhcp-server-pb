@@ -1,0 +1,17 @@
+---
+packages:
+  Debian:
+    ldap:
+      - slapd
+      - slapd-contrib
+      - ldap-utils
+      - libsasl2-modules
+      - python3-ldap
+    isc_dhcp:
+      - isc-dhcp-server
+  RedHat:
+    ldap:
+      - openldap-servers
+    dhcp:
+      - dhcp-server
+

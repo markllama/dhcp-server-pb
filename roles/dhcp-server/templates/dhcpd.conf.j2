@@ -1,0 +1,19 @@
+# DHCP Host Location
+ldap-server {{ ldap.hostname }}.{{ ldap.domain }}
+ldap-port 389 ;
+
+# A user with read/write access to the database
+ldap-username "{{ ldap.credentials.bind_dn }}" ;
+ldap-password "{{ ldap.credentials.bind_pw }}" ;
+
+# Identify the root object of the config
+ldap-base-dn "dc={{ ldap.domain.split('.') | join(',dc=') }}" ;
+ldap-dhcp-server-cn "{{ ldap.hostname }}" ;
+
+# All queries check the database
+ldap-method dynamic ;
+
+# Write the DHCP config for validation
+#   An empty file must exist before starting the daemon
+#   And it must be writable by the dhcpd user
+#ldap-debug-file "/var/log/dhcp-ldap-startup.log" ;
