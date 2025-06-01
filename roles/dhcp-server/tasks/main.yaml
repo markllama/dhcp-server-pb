@@ -2,23 +2,95 @@
 #
 #
 #
+- name: Set the hostname
+  hostname:
+    name: "{{ dhcp.hostname }}.{{ dhcp.domain }}"
+  tags: host
+
 - name: Make sure package metadata is up to date
   package:
     update_cache: true
+
+- name: Install basic utility packages
+  package:
+    name:
+      - vim
 
 - name: Install LDAP Server
   import_tasks: ldap-server.yaml
   tags: ldap
 
-- name: define LDAP variables
-  set_fact:
-    ldap_zone_dn: "dc={{ ansible_domain.split('.') | join(',dc=') }}"
-    ldap_host_dn: "cn={{ ansible_hostname }},dc={{ ansible_domain.split('.') | join(',dc=') }}"
-    ldap_admin_dn: "cn={{ ldap.bind_cn }},dc={{ ansible_domain.split('.') | join(',dc=') }}"
-  tags:
-    - dhcp
-    - dhcp_config
+- name: Initialize the LDAP DB
+  block:
+    - name: Find the user database DN
+      shell:
+        cmd: |
+          ldapsearch -Q -Y EXTERNAL -H ldapi:/// -LLL -b cn=config olcDatabase=\* dn |
+          grep mdb |
+          cut -d' ' -f2
+      tags: ldap_password
+      register: user_db_query
+
+    - name:
+      debug:
+        msg: "{{ user_db_query.stdout }}"
+      tags: ldap_password
   
+    - name: Record DB info
+      set_fact:
+        ldap_db_name: "{{ user_db_query.stdout }}"
+      tags: ldap_password
+
+    - name: define LDAP variables
+      set_fact:
+        ldap_zone_dn: "dc={{ dhcp.domain.split('.') | join(',dc=') }}"
+        ldap_host_dn: "cn={{ dhcp.hostname }},dc={{ dhcp.domain.split('.') | join(',dc=') }}"
+        ldap_admin_dn: "cn={{ ldap.bind_cn }},dc={{ dhcp.domain.split('.') | join(',dc=') }}"
+      tags:
+        - dhcp
+        - dhcp_config
+        - ldap_password
+  
+    - name: Get the DB record
+      community.general.ldap_search:
+        dn: "{{ ldap_db_name }}"
+        attrs:
+          - olcSuffix
+          - olcRootDN
+          - olcRootPW
+      register: ldap_db_record
+      tags: ldap_password
+      # continue on fail
+
+    #- name: Report DB record
+    #  debug:
+    #    msg: "{{ ldap_db_record }}"
+    #  tags: ldap_password
+
+      # Set:
+    #   olcSuffix
+    #   olcRootDN
+    #   olcRootPW
+      
+    - name: Configure the DB root and admin user
+      shell:
+        cmd: |
+          sudo ldapmodify -Q -Y EXTERNAL -H ldapi:/// <<EOF
+          dn: {{ ldap_db_name }}
+          changetype: modify
+          replace: olcSuffix
+          olcSuffix: dc={{ dhcp.domain.split('.') | join(',dc=') }}
+          -
+          replace: olcRootDN
+          olcRootDN: cn=admin,dc={{ dhcp.domain.split('.') | join(',dc=') }}
+          -
+          replace: olcRootPW
+          olcRootPW: {{ ldap.pw_hash }}
+          EOF
+      #when: ( ldap_db_record.results is not defined) or ( ldap_db_record.results[0].olcSuffix  )
+      tags: ldap_password 
+
+
 - name: Configure DHCP Server (LDAP)
   import_tasks: dhcp-config.yaml
   tags: dhcp_config

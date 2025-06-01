@@ -1,5 +1,5 @@
 # DHCP Host Location
-ldap-server {{ ansible_hostname }}.{{ ansible_domain }}
+ldap-server "{{ ansible_hostname }}.{{ ansible_domain }}" ;
 ldap-port 389 ;
 
 # A user with read/write access to the database

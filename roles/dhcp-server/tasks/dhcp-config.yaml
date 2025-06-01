@@ -25,7 +25,7 @@
       - dhcpService
       - dhcpOptions
     attributes:
-      dhcpPrimaryDN: "cn=dhcp-host,{{ ldap_zone_dn }}"
+      dhcpPrimaryDN: "{{ ldap_host_dn }}"
       dhcpStatements:
         - authoritative
         - ddns-update-style none

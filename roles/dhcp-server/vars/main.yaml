@@ -2,16 +2,16 @@
 packages:
   Debian:
     ldap:
-      - slapd
-      - slapd-contrib
-      - ldap-utils
-      - libsasl2-modules
-      - python3-ldap
+      - slapd             # OpenLDAP server
+      #- ldap-utils        # Schema and stuff?
+      - slapd-contrib     # I wonder what?
+#      - libsasl2-modules
+      - python3-ldap      # required by ansible for community.general.ldap_entry
     isc_dhcp:
       - isc-dhcp-server
+      - isc-dhcp-server-ldap
   RedHat:
     ldap:
       - openldap-servers
     dhcp:
       - dhcp-server
-
