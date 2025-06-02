@@ -73,7 +73,7 @@ commands.
 
 #### Ansible Setup
 
-On the deployment server
+On the deployment server, 
 
 #### Host Variables
 
