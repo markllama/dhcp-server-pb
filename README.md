@@ -1,7 +1,7 @@
-= `dhcp-server-pb`
+# `dhcp-server-pb`
 An Ansible playbook to create an LDAP backed DHCP server
 
-== HISTORY
+## HISTORY
 
 A decade ago I wrote a [blog
 post](https://electron-swamp.blogspot.com/2014/05/robust-and-flexable-dhcp-and.html)
@@ -41,17 +41,55 @@ The original post used Red Hat Enterprise Linux or Fedora Linux as the
 OS base. The current version is built using Ubuntu, though the hooks
 exist to implement it on RPM based systems as well.
 
-== Implementation
+## Usage
 
+The DHCP server with its attached LDAP server are deployed using the
+ansible playbook `dhcp-server-pb.yaml`.
+	
+	ansible-playbook --vault-secrets-file vault-secrets dhcp-server-pb.yaml
 
+### Preparation
 
-== TODO
+    git clone https://github.com/markllama/dhcp-server-pb
+	cd dhcp-server-pb
+
+#### Host Initialization
+
+I am starting currently with a minimal installation of [Ubuntu
+Server](https://ubuntu.com/download/server). I have installed it from
+USB live installer and set a static IP address. I created a non-root
+user, granted that user `sudo` access with *NOPASSWD* and installed an
+SSH public key. With this, I can configure logins from my deployment
+system using SSH to a user with sudo privileges to execute the Ansible
+commands.
+
+* Ubuntu Server
+** Minimal Installation
+** Fixed IP Address
+** SSH server installed
+* Local user
+** SSH Public key in `.ssh/authorized_keys`
+** `sudo` access with *NOPASSWD*
+
+#### Ansible Setup
+
+On the deployment server
+
+#### Host Variables
+
+#### Managing Secrets - Ansible Vault
+
+### Execution
+
+## Implementation
+
+## TODO
 
 * Adapt to RPM based systems
 * Convert to use software containers
 * Re-implement with ISC Kea and MariaDB
 
-== References
+## References
 
 * ISC DHCP - https://www.isc.org/dhcp/
 * OpenLDAP `slapd` - https://www.openldap.org/
