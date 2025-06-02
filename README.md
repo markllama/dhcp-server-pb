@@ -64,12 +64,12 @@ system using SSH to a user with sudo privileges to execute the Ansible
 commands.
 
 * Ubuntu Server
-** Minimal Installation
-** Fixed IP Address
-** SSH server installed
+  * Minimal Installation
+  * Fixed IP Address
+  * SSH server installed
 * Local user
-** SSH Public key in `.ssh/authorized_keys`
-** `sudo` access with *NOPASSWD*
+  * SSH Public key in `.ssh/authorized_keys`
+  * `sudo` access with *NOPASSWD*
 
 #### Ansible Setup
 
