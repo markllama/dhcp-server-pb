@@ -57,14 +57,15 @@
   community.general.ldap_entry:
     bind_dn: "{{ ldap_admin_dn }}"
     bind_pw: "{{ ldap.bind_pw }}"
-    dn: "cn=testhost,cn=dhcp-service,{{ ldap_zone_dn }}"
+    dn: "cn={{ item.name }},cn=dhcp-service,{{ ldap_zone_dn }}"
     objectClass:
       - top
       - dhcpHost
       - dhcpOptions
     attributes:
-      dhcpHWAddress: ethernet 0a:00:00:00:00:01
-      dhcpStatements: fixed-address 192.168.3.254
-      dhcpOption: host-name "testhost"
-    state: present
+      dhcpHWAddress: ethernet "{{ item.mac }}"
+      dhcpStatements: fixed-address "{{ item.ip }}"
+      dhcpOption: host-name "{{ item.name }}"
+      state: "{{ item.state | default('present', true) }}"
+  loop: "{{ dhcp_entries.hosts }}"
   tags: dhcp_config
