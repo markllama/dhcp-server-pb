@@ -4,6 +4,7 @@ inventory.yaml
 vault-secrets
 vars/ldap-credentials.yaml
 vars/dhcp-server.yaml
+vars/dhcp-host-entries.yaml
 
 # Ignore Emacs backup files
 *~
